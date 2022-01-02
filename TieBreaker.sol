@@ -7,6 +7,7 @@ contract tieBreaker{
         bytes32 blindedHand;
         uint deposit;
         bool commited;
+        bool revealed;
     }
 
     struct revealedHand{
@@ -69,12 +70,14 @@ contract tieBreaker{
          blindedHands[firstParticipant].push(blindHand({
             blindedHand : 0,
             deposit :0,
-            commited : false
+            commited : false,
+            revealed : false
         }));
          blindedHands[secondParticipant].push(blindHand({
             blindedHand : 0,
             deposit :0,
-            commited : false
+            commited : false,
+            revealed : false
         }));
     }
     
@@ -101,6 +104,7 @@ contract tieBreaker{
     /// correctly blinded and revealed hand.
     function reveal(uint _hand, bytes32 random) external onlyAfter(commitEnd) onlyBefore(revealEnd){
         require(blindedHands[msg.sender][0].commited,"You have not commited");
+        require(!blindedHands[msg.sender][0].revealed,"Already Revealed");
         blindHand memory handToCheck = blindedHands[msg.sender][0];
         notRefunded += handToCheck.deposit;
 
@@ -111,7 +115,7 @@ contract tieBreaker{
              if(_hand == 1 || _hand == 2 || _hand == 3){   
                 notRefunded -= handToCheck.deposit;
                 blindedHands[msg.sender][0].deposit = 0;
-                blindedHands[msg.sender][0].commited = false;
+                blindedHands[msg.sender][0].revealed = true;
                 payable(msg.sender).transfer(handToCheck.deposit);
                 participantHands[i].hand = _hand;
                 participantHands[i].participant = msg.sender;
