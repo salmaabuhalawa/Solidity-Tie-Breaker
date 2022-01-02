@@ -85,11 +85,11 @@ contract tieBreaker{
     /// Rock = 1 Paper = 2 Scissors = 3
     /// Place a blinded hand with `_blindedhand` = keccak256(hand,
     /// secretRandom) where secretRandom
-    /// is a 256 bit random value.
+    /// is a random bytes32 value.
     /// The sent ether is only refunded if the above scheme is followed correctly 
     /// and the commitment is correctly revealed in the
     /// revealing phase. The commitment is valid if the
-    /// ether sent together with it is at least "depoistValue"..
+    /// ether sent together with it is at least "depoistValue".
     /// Each address can only use this function once
     function commit(bytes32 _blindedHand) payable external onlyBefore(commitEnd) {
         require(msg.sender == firstParticipant || msg.sender == secondParticipant,"Unknown Participant");
@@ -131,25 +131,25 @@ contract tieBreaker{
         require(!ended,"The protocol has already completed");
         ended = true;
 
-        bool firstReveal = blindedHands[firstParticipant][0].commited;
-        bool secondReveal = blindedHands[secondParticipant][0].commited;
+        bool firstReveal = blindedHands[firstParticipant][0].revealed;
+        bool secondReveal = blindedHands[secondParticipant][0].revealed;
 
-        if( firstReveal && secondReveal )//if neither followed the protocol correctly 
+        if( !firstReveal && !secondReveal )//if neither followed the protocol correctly 
         {   payable(manager).transfer(reward + notRefunded);
             emit neitherParticipantfollowed();
             return true;
         }
         
         if( !firstReveal && secondReveal)//if only one follwed the protocol correctly
-        {   payable(firstParticipant).transfer(reward);
+        {   payable(secondParticipant).transfer(reward);
             payable(manager).transfer(notRefunded);
-            emit participantDidNotFollow(secondParticipant);
+            emit participantDidNotFollow(firstParticipant);
             return true;    
         }
         if( firstReveal && !secondReveal ){
-            payable(secondParticipant).transfer(reward);
+            payable(firstParticipant).transfer(reward);
             payable(manager).transfer(notRefunded);
-            emit participantDidNotFollow(firstParticipant);
+            emit participantDidNotFollow(secondParticipant);
             return true;
         }
 
